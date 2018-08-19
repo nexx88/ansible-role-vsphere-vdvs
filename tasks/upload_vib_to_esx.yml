@@ -1,0 +1,12 @@
+---
+# handlers file for ansible-role-vdvs-esx
+- name: Download vib from artifactory
+  local_action:
+    module: get_url
+    url: "{{artifactory}}/software-local/devops/vmware/vibs/esx-vmdkops-service/{{vib_name}}"
+    dest: /tmp/
+
+- name: Upload vib to esx
+  copy:
+    src: "/tmp/{{ vib_name }}"
+    dest: "/tmp/{{ vib_name }}"

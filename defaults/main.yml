@@ -1,0 +1,8 @@
+---
+# defaults file for ansible-role-vdvs-esx
+vdvs_version: 0.21
+vib_version: 0.21.2.8b7dc30-0.0.1
+vib_name: VMWare_bootbank_esx-vmdkops-service_{{vib_version}}.vib
+artifactory: http://artifactory.acme.com/artifactory
+vdvs_datastore: ESX-DATASTORE-01
+force_update: false

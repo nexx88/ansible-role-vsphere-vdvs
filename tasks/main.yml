@@ -1,0 +1,35 @@
+ - name: check if any vDVS version is available
+   command: esxcli software vib get -n esx-vmdkops-service
+   register: vibs_output
+   ignore_errors: true
+   changed_when: false
+
+ - set_fact:
+        installed_version: "{{ vibs_output.stdout_lines[0].split('_')[-1] }}"
+        update_needed: "{{ vibs_output.stdout_lines[0].split('_')[-1]|version_compare(vib_version,'<') or force_update }}"
+   when: vibs_output.stderr == ""
+
+ - include_tasks: upload_vib_to_esx.yml
+   when: "vibs_output.rc == 1 or update_needed"
+
+ - name: Install vDVS {{vib_version}}
+   command: "esxcli software vib install -v /tmp/{{vib_name}}"
+   when: "vibs_output.rc == 1"
+
+ - name: Check Config DB status
+   shell: "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py config status | grep 'DB_Mode: NotConfigured'"
+   register: db_config
+   ignore_errors: true
+   changed_when: false
+
+ - name: Create Config DB
+   command: "/usr/lib/vmware/vmdkops/bin/vmdkops_admin.py config init --datastore={{vdvs_datastore}}"
+   when: "db_config.rc == 0"
+
+ - name: Updating esx-vmdkops-service to {{vib_version}}
+   command: "esxcli software vib update -v /tmp/{{vib_name}}"
+   register: update
+   retries: 3
+   delay: 60
+   changed_when: "'Message: Operation finished successfully.' in update.stdout"
+   when: update_needed
